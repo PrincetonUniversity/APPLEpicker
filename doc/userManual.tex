@@ -1,0 +1,206 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{ragged2e}
+\usepackage{url}
+\usepackage{enumitem}
+
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+
+\title{APPLE picking, a user guide}
+\author{Ayelet Heimowitz, Joakim And\'{e}n and Amit Singer}
+\date{Feburary, 2018}
+
+\begin{document}
+
+\maketitle
+
+\justify
+
+\section{Downloading the APPLE picker}
+
+The current version of APPLE picker is available for users with MATLAB. It requires the Image Processing Toolbox to be installed. For best performance, we recommend running the code on a GPU using the Distributed Computing Toolbox, although the code will run fine without it. In the future we plan to release a Python version of the APPLE picker.
+
+Download the package from
+\begin{center}
+\url{https://github.com/PrincetonUniversity/APPLEpicker}
+\end{center}
+to some destination folder, \textit{e.g.} \textsf{applePicker}.
+This is the folder from which the APPLE picker will run. This folder has the following structure
+\begin{itemize}
+\item \textsf{data/} This folder contains the data used in the example script. To begin with, it only contains the hashes of the files in the dataset, but once the scripts are run, they will download the entire datasets into this folder.
+\item \textsf{doc/} The documentation for the package.
+\item \textsf{matlab/} The MATLAB source code. This contains all the functions needed to perform APPLE picking.
+\item \textsf{results/} This directory will eventually contain the results of the APPLE picker. It is not present at install time but is created when the APPLE picker is run.
+\item \textsf{LICENSE} The package license.
+\item \textsf{README} A short README file for the package.
+\item \textsf{setup.m} A MATLAB setup script that initializes the environment and sets the necessary paths.
+\end{itemize}
+
+\section{Getting Started}
+
+After downloading the package, start MATLAB in the package directory and run
+\begin{center}
+\texttt{setup;}
+\end{center}
+This will initialize the environment to make sure the paths to the MATLAB files are correct.
+
+To download some example datasets \cite{EMPIAR, betaGal, KLH} and run the APPLE picker on them, run
+\begin{center}
+\texttt{getParticles;}
+\end{center}
+Since the datasets are quite large, this may take some time. STAR files containing locations of the picked particles will be found in the \textsf{results/} folder.
+
+By default, the \texttt{getParticles} script will only perform particle picking on a single micrograph and will not show any images. This behavior can be modified by changing the \texttt{runAll} and \texttt{showImages} parameters in the script.
+
+\section{Running the APPLE picker}
+
+The function \texttt{ApplePicker} performs the particle picking. This function has $2$ necessary inputs and $7$ optional ones. The function is called as
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'property1', value1, 'property2', value2, ... )}
+\end{center}
+The inputs are described below.
+
+\begin{itemize}[leftmargin=0.5cm]
+\item \texttt{path}
+
+This parameter contains the location of the micrographs to be processed. Assume all the micrographs are in the folder \textsf{data/empiar10017}. To pick particles from all the micrographs, we set the first input to
+\begin{center}
+\texttt{'data/empiar10017/'}.
+\end{center}
+On the other hand, to pick particles from a single micrograph called \textsf{Falcon\_2012\_06\_12-14\_33\_35\_0.mrc}, we set it to
+\begin{center}
+\texttt{'data/empiar10017/Falcon\_2012\_06\_12-14\_33\_35\_0.mrc'}
+\end{center}
+
+\item \texttt{particleSize}
+
+The second input into \texttt{ApplePicker} is an integer \texttt{particleSize} such that \texttt{particleSize}$\times$\texttt{particleSize} is the size of a window containing the particle.
+
+\item Optional properties
+
+These are specified in the key-value form, \texttt{'property', value}, where \texttt{property} is one of the following:
+\begin{itemize}[leftmargin=0.5cm]
+\item \texttt{nOverlap}
+
+This optional input allows the user to specify the amount of overlap to be tolerated between two adjacent particles.
+The output of the APPLE picker is a .star file containing the center of a \texttt{particleSize}$\times$\texttt{particleSize} box
+around each picked particle.  The \texttt{nOverlap} property ensures that any two boxes of size \texttt{nOverlap}$\times$ \texttt{nOverlap}
+around those centers do not overlap. If an overlap exists, both particles are discarded.
+
+In order to set this property to, \textit{e.g.} $62$, call \texttt{ApplePicker} as in
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'nOverlap', 62, ... )}
+\end{center}
+
+The default value for this property is $$\texttt{nOverlap}=\text{round} \left( \frac{\texttt{particleSize}}{10} \right).$$
+
+\item \texttt{qSize}
+
+The APPLE picker assigns a score to query images according to the likelihood they contain a particle. This property determines the size of each query window.
+This size should be slightly smaller than the particle size. To set the size of the query images to, \textit{e.g.}, $52 \times 52$, call
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'qSize', 52, ... )}
+\end{center}
+
+The value specified for \texttt{qSize} should be divisible by $4$. If it is not, the APPLE picker will choose the closest possible integer which is smaller that the specified qSize and divisible by $4$.
+
+The default value for this property is
+$$\texttt{qSize} = 4 \times \floor{\frac{t}{4}}, \qquad t=\text{round}\left( \frac{2 \times \texttt{particleSize}}{3} \right).$$
+\item \texttt{classifierProps}
+
+The APPLE picker uses a support vector machine classifier to determine the classification of each pixel in the micrograph.  This feature allows to specify the size of the
+training set for the classifier. The input is a vector containing the number of particle examples and the number of noise examples to be used for classifier training. For example, in order to
+use $600$ examples and $8000$ noise examples, call
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'classifierProps', [600; 8000], ... )}
+\end{center}
+
+The number of examples must be smaller than the number of query images. For a micrograph of size $N \times N$,
+there are approximately $$2 \left( \frac{N}{\text{qSize}} \right)^2$$ query images. The higher the concentration of
+particles in the micrograph, the more particle examples can be used.
+
+The default values for the number of particle and noise examples is $5\%$ and $30\%$ of the query images, respectively.
+
+\item \texttt{containerSize}
+
+This property depends on the size of the micrograph. For a micrograph of size $N \times N$, we suggest to aim for $300-400$ containers when setting this property.
+
+To call \texttt{ApplePicker} with a chosen value $L$ for \texttt{conainerSize}, call
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'containerSize', L, ... )}
+\end{center}
+
+For a micrograph of size $M \times N$, the default value is $$ \texttt{containerSize}=\floor{\frac{\min\left(M, N\right)}{18}}.$$
+
+\item \texttt{minParticle}
+
+This property specifies the minimum diameter of a particle. The APPLE picker contains a classifier that makes a decision as to the classification of each pixel.
+Any cluster of particle pixels that would disappear if an erosion operation were done with a disk of diameter specified by minParticle
+will be discarded. In order to specify this minimal diameter to be, \textit{e.g.}, $20$, call
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'minParticle', 20, ... )}
+\end{center}
+
+The default value for this property is \texttt{qSize}.
+
+\item \texttt{maxParticle}
+
+This property specifies the maximum diameter of a particle.
+Any cluster of particle pixels that would not disappear if an erosion operation were done with a disk of diameter specified by maxParticle
+will be discarded. In order to specify this maximal diameter to be, \textit{e.g.}, $100$, call
+
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'maxParticle', 100, ... )}
+\end{center}
+
+The default value for this property is $$ \texttt{maxParticle}=\frac{5}{3}\texttt{particleSize}.$$
+
+\item \texttt{showImages}
+
+In order to view images of the micrograph, the output of the classifier and the picked particles, set
+\begin{center}
+\texttt{ApplePicker(path, particleSize, 'showImages', true, ... )}
+\end{center}
+By default, the APPLE picker does not present any images.
+
+\end{itemize}
+
+All of these optional parameters can be specified simultaneously by combining them in the call to \texttt{ApplePicker}.
+
+\end{itemize}
+
+\subsection{Output and Examples}
+The output from the APPLE picker is a file containing the coordinates of the centers of each picked particle. The name of the output
+is the same as the name of the input file, but with \textsf{.mrc} replaced with \textsf{.star}. The output files are
+saved in the subdirectory \textsf{results/}.
+
+Examples of running the APPLE picker on the $\beta$-galactosidase and KLH datasets are provided in the script \texttt{getParticles}.
+
+\subsection{Citation}
+If you use the APPLE picker, please cite our paper ``APPLE Picker: Automatic Particle Picking, a Low-Effort Cryo-EM Framework",
+available at https://arxiv.org/abs/1802.00469.
+
+\begin{thebibliography}{9}
+\bibitem{EMPIAR}
+Iudin, A., Korir, P., Salavert-Torres, J., Kleywegt, G., and Patwardhan,
+ A. (2016). \textit{EMPIAR: A public archive for raw electron microscopy image data}.
+ Nature Methods, 13.
+
+\bibitem{betaGal}
+Scheres, S. H. (2015). \textit{Semi-automated selection of cryo-EM
+ particles in RELION-1.3}. Journal of Structural Biology,
+ 189, 114-122.
+
+ \bibitem{KLH}
+ Zhu, Y., Carragher, B., Mouche, F., and Potter, C. S. (2003).
+ \textit{Automatic particle detection through efficient hough transforms}.
+ IEEE Transactions on Medical Imaging, 22, 1053-1062.
+
+\end{thebibliography}
+
+\end{document}
