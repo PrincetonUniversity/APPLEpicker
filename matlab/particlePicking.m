@@ -144,8 +144,8 @@ while flag_detected
     end
 end
 
-if imfill(y_test, 'holes') == ones(size(y_test))
-    y_test(101:end-100, 101:end-100) = 0;
+if numel(find(imfill(y_test, 'holes'))) > 9*numel(y_test)/10
+    y_test(1:100, 1:100) = 0;
 end
 
 y_test_e = imerode(imfill(y_test, 'holes'), strel('disk', minParticle));
@@ -180,12 +180,13 @@ end
 
 % Write output star file
 [~, name, ~] = fileparts(mName);
-myTable = table(centers_idx(:, 2), centers_idx(:, 1));
+
+myTable = table(centers_idx(:, 1), centers_idx(:, 2));
 myTable.Properties.VariableNames = {'rlnCoordinateX', 'rlnCoordinateY'};
 myStruct = table2struct(myTable);
 myStar = struct('root', myStruct);
 
 mkdirp(fullfile(pkgRoot(), 'results'));
-saveStar(fullfile(pkgRoot(), 'results', [name '.star']), myStar);
+saveStar(fullfile(pkgRoot(), 'results', [name '_applepick.star']), myStar);
 
 end

@@ -148,17 +148,17 @@ for i=1:numel(mNames)
         axis equal
         set(gca,'xtick',[])
         set(gca,'YTick',[])
-        axis([1, size(microImg_ds, 1), 1, size(microImg_ds, 2)])
+        axis([1, size(microImg_ds, 2), 1, size(microImg_ds, 1)])
         figure; imagesc(classifiedImg); colormap gray
         axis equal
         set(gca,'xtick',[])
         set(gca,'YTick',[])
-        axis([1, size(microImg_ds, 1), 1, size(microImg_ds, 2)])
+        axis([1, size(microImg_ds, 2), 1, size(microImg_ds, 1)])
         figure; imagesc(pickedParticleImg); colormap gray
         axis equal
         set(gca,'xtick',[])
         set(gca,'YTick',[])
-        axis([1, size(microImg_ds, 1), 1, size(microImg_ds, 2)])
+        axis([1, size(microImg_ds, 2), 1, size(microImg_ds, 1)])
     end
 end
 
