@@ -1,10 +1,10 @@
-# APPLE Picker
+### APPLE Picker
 
-This is our MATLAB version. Check out the Python version of the project:
-https://github.com/PrincetonUniversity/APPLEpicker-python
+This is the MATLAB version. Check out the 
+[Python version](https://github.com/PrincetonUniversity/APPLEpicker-python)
+of the project:
 
-Also make sure to subscribe to our important updates, tips and tricks about the project:
-http://eepurl.com/dFmFfn
+Also make sure to [subscribe](http://eepurl.com/dFmFfn) to our important updates, tips and tricks about APPLE Picker:
 
 This package contains an implementation of the APPLE particle picker as
 described in the paper
